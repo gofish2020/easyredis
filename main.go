@@ -26,20 +26,6 @@ func main() {
 		Addr: "127.0.0.1:6379",
 	}, redis.NewRedisHandler())
 
-	// go func() {
-	// 	time.Sleep(5 * time.Second)
-	// 	p := os.Getpid()
-	// 	process, err := os.FindProcess(p)
-	// 	if err != nil {
-	// 		fmt.Println("Error finding process:", err)
-	// 		return
-	// 	}
-	// 	err = process.Signal(syscall.SIGTERM)
-	// 	if err != nil {
-	// 		fmt.Println("Error sending signal:", err)
-	// 	}
-	// }()
-
 	//5. 启动服务
 	err := tcp.Start()
 	if err != nil {
@@ -74,6 +60,7 @@ func initConfig() {
 	if utils.FileExists(configFileName) {
 		conf.LoadConfig(configFileName)
 	} else {
+		// 默认的配置
 		conf.GlobalConfig = &conf.RedisConfig{
 			Bind:           "0.0.0.0",
 			Port:           6399,

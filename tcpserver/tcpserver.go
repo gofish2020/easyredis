@@ -55,6 +55,7 @@ func (t *TCPServer) Start() error {
 	return nil
 }
 
+// accept 死循环接收新连接的到来
 func (t *TCPServer) accept() error {
 
 	for {
@@ -78,7 +79,6 @@ func (t *TCPServer) accept() error {
 	}
 
 	return nil
-
 }
 
 func (t *TCPServer) handleConn(conn net.Conn) {
@@ -110,6 +110,6 @@ func (t *TCPServer) Close() {
 	t.listener.Close()
 	// 关闭处理对象
 	t.redisHander.Close()
-	// 阻塞中...
+	// 阻塞中...(优雅关闭)
 	t.waitDone.Wait()
 }
