@@ -66,7 +66,7 @@ func (t *TCPServer) accept() error {
 				time.Sleep(5 * time.Millisecond)
 				continue
 			}
-			// 说明监听listener出错，无法接收新连接
+			// 说明监听listener关闭，无法接收新连接
 			logger.Warn(err.Error())
 			atomic.CompareAndSwapInt32(&t.closeTcp, 0, 1)
 			// 整个进程退出

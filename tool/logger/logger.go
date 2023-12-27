@@ -223,8 +223,9 @@ func SetLoggerLevel(logLevel LogLevel) {
 }
 
 // ***********外部调用的日志函数***************
-func Debug(msg string) {
+func Debug(v ...any) {
 	if defaultLogger.logLevel >= DEBUG {
+		msg := fmt.Sprint(v...)
 		defaultLogger.writeLog(DEBUG, callerDepth, msg)
 	}
 }
@@ -235,8 +236,9 @@ func Debugf(format string, v ...any) {
 	}
 }
 
-func Info(msg string) {
+func Info(v ...any) {
 	if defaultLogger.logLevel >= INFO {
+		msg := fmt.Sprint(v...)
 		defaultLogger.writeLog(INFO, callerDepth, msg)
 	}
 }
@@ -248,8 +250,9 @@ func Infof(format string, v ...any) {
 	}
 }
 
-func Warn(msg string) {
+func Warn(v ...any) {
 	if defaultLogger.logLevel >= WARN {
+		msg := fmt.Sprint(v...)
 		defaultLogger.writeLog(WARN, callerDepth, msg)
 	}
 }
@@ -261,8 +264,9 @@ func Warnf(format string, v ...any) {
 	}
 }
 
-func Error(msg string) {
+func Error(v ...any) {
 	if defaultLogger.logLevel >= ERROR {
+		msg := fmt.Sprint(v...)
 		defaultLogger.writeLog(ERROR, callerDepth, msg)
 	}
 }
@@ -274,8 +278,9 @@ func Errorf(format string, v ...any) {
 	}
 }
 
-func Fatal(msg string) {
+func Fatal(v ...any) {
 	if defaultLogger.logLevel >= FATAL {
+		msg := fmt.Sprint(v...)
 		defaultLogger.writeLog(FATAL, callerDepth, msg)
 	}
 }

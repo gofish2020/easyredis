@@ -1,7 +1,7 @@
 
 # Golang实现自己的Redis（TCP篇）
 
-本项目分成 11 个部分，实现一个可用的Redis服务，姑且叫**EasyRedis**吧，希望通过文章将Redis掰开撕碎了呈现给大家，而不是仅仅停留在八股文的层面，并且有非常爽的感觉，欢迎持续关注学习。
+用11篇文章实现一个可用的Redis服务，姑且叫**EasyRedis**吧，希望通过文章将Redis掰开撕碎了呈现给大家，而不是仅仅停留在八股文的层面，并且有非常爽的感觉，欢迎持续关注学习。
 
 项目代码地址: https://github.com/gofish2020/easyredis 欢迎Fork & Star
 
@@ -17,7 +17,7 @@
 - [ ] easyredis之连接池
 - [ ] easyredis之分布式集群存储
 
-## EasyRedis之TCP服务 
+## 【第一篇】EasyRedis之TCP服务 
 
 通过本篇文章可以学到什么？
 
@@ -32,7 +32,7 @@
 代码设计的思路：**生产者消费者模型**
  - `writeLog`负责将数据保存到 `logMsgChan chan *logMessage`通道中（生产者）
  - 启动单独的goroutine从 `logMsgChan chan *logMessage`中读取数据（消费者），同时将日志输出到文件or命令行中
- - 好处在于：解藕、通过写入缓冲而非直接输出到文件，提升写入并发能力
+ - 好处在于：解耦、通过写入缓冲而非直接输出到文件，提升写入并发能力
 
  ![Alt text](image.png)
 
