@@ -10,6 +10,7 @@ var r = rand.New(rand.NewSource(time.Now().UnixNano()))
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
+// 生成随机字符串
 func RandString(n int) string {
 
 	result := make([]rune, n)

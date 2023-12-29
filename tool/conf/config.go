@@ -13,6 +13,7 @@ import (
 )
 
 const runidMaxLen = 40
+const defaultDatabasesNum = 16
 
 /*
 purpose:读取conf配置文件
@@ -24,6 +25,9 @@ type RedisConfig struct {
 	Port  int    `conf:"port"`
 	Dir   string `conf:"dir"`
 	RunID string `conf:"runid"`
+
+	// 数据库个数
+	Databases int `conf:"databases"`
 
 	// aof 相关
 	AppendOnly     bool   `conf:"appendonly"`     // 是否启用aof
@@ -44,8 +48,9 @@ func init() {
 		Bind:       "127.0.0.1",
 		Port:       6379,
 		AppendOnly: false,
-		Dir:        os.TempDir(),
+		Dir:        ".",
 		RunID:      utils.RandString(runidMaxLen),
+		Databases:  defaultDatabasesNum,
 	}
 }
 
@@ -65,6 +70,10 @@ func LoadConfig(configFile string) error {
 	GlobalConfig.RunID = utils.RandString(runidMaxLen)
 	if GlobalConfig.Dir == "" {
 		GlobalConfig.Dir = utils.ExecDir()
+	}
+
+	if GlobalConfig.Databases == 0 {
+		GlobalConfig.Databases = defaultDatabasesNum
 	}
 	return nil
 }

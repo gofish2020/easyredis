@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/gofish2020/easyredis/redis"
@@ -23,7 +24,7 @@ func main() {
 
 	//4. 服务对象
 	tcp := tcpserver.NewTCPServer(tcpserver.TCPConfig{
-		Addr: "127.0.0.1:6379",
+		Addr: fmt.Sprintf("%s:%d", conf.GlobalConfig.Bind, conf.GlobalConfig.Port),
 	}, redis.NewRedisHandler())
 
 	//5. 启动服务
@@ -63,7 +64,7 @@ func initConfig() {
 		// 默认的配置
 		conf.GlobalConfig = &conf.RedisConfig{
 			Bind:           "0.0.0.0",
-			Port:           6399,
+			Port:           6379,
 			AppendOnly:     false,
 			AppendFilename: "",
 			RunID:          utils.RandString(40),

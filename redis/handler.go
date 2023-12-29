@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gofish2020/easyredis/engine"
+	"github.com/gofish2020/easyredis/redis/connection"
 	"github.com/gofish2020/easyredis/redis/parser"
 	"github.com/gofish2020/easyredis/redis/protocal"
 	"github.com/gofish2020/easyredis/tool/logger"
@@ -34,26 +35,28 @@ func NewRedisHandler() *RedisHandler {
 // 然后针对消息格式，进行不同的业务处理
 func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 
-	h.activeConn.Store(conn, struct{}{})
+	// 因为需要记录和conn相关的各种信息呢，所以定义 KeepConnection对象，将conn保存
+	keepConn := connection.NewKeepConnection(conn)
+	h.activeConn.Store(keepConn, struct{}{})
 
 	outChan := parser.ParseStream(conn)
 	for payload := range outChan {
 		if payload.Err != nil {
 			// 网络conn关闭
 			if payload.Err == io.EOF || payload.Err == io.ErrUnexpectedEOF || strings.Contains(payload.Err.Error(), "use of closed network connection") {
-				h.activeConn.Delete(conn)
-				conn.Close()
-				logger.Warn("client closed:" + conn.RemoteAddr().String())
+				h.activeConn.Delete(keepConn)
+				logger.Warn("client closed:" + keepConn.RemoteAddr())
+				keepConn.Close()
 				return
 			}
 
 			// 解析出错 protocol error
 			errReply := protocal.NewGenericErrReply(payload.Err.Error())
-			_, err := conn.Write(errReply.ToBytes())
+			_, err := keepConn.Write(errReply.ToBytes())
 			if err != nil {
-				h.activeConn.Delete(conn)
-				conn.Close()
-				logger.Warn("client closed:" + conn.RemoteAddr().String() + " err info: " + err.Error())
+				h.activeConn.Delete(keepConn)
+				logger.Warn("client closed:" + keepConn.RemoteAddr() + " err info: " + err.Error())
+				keepConn.Close()
 				return
 			}
 			continue
@@ -72,11 +75,11 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 
 		logger.Debugf("%q", string(reply.ToBytes()))
 
-		result := h.engine.Exec(conn, reply.RedisCommand)
+		result := h.engine.Exec(keepConn, reply.RedisCommand)
 		if result != nil {
-			conn.Write(result.ToBytes())
+			keepConn.Write(result.ToBytes())
 		} else {
-			conn.Write(protocal.NewUnknownErrReply().ToBytes())
+			keepConn.Write(protocal.NewUnknownErrReply().ToBytes())
 		}
 	}
 }
@@ -86,8 +89,8 @@ func (h *RedisHandler) Close() error {
 	logger.Info("handler shutting down...")
 
 	h.activeConn.Range(func(key, value any) bool {
-		conn := key.(net.Conn)
-		conn.Close()
+		keepConn := key.(*connection.KeepConnection)
+		keepConn.Close()
 		h.activeConn.Delete(key)
 		return true
 	})
