@@ -3,14 +3,14 @@ package engine
 import (
 	"strings"
 
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 )
 
 /*
 命令注册中心：记录命令和命令执行函数之间的映射关系
 */
 
-type ExecFunc func(db *DB, args [][]byte) protocal.Reply
+type ExecFunc func(db *DB, args [][]byte) protocol.Reply
 
 var commandCenter map[string]*command = make(map[string]*command)
 

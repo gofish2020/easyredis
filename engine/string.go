@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/gofish2020/easyredis/engine/payload"
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 )
 
 const (
@@ -19,23 +19,23 @@ const (
 const nolimitedTTL int64 = 0 // 过期时间
 
 // 获取底层存储对象【字节流】
-func (db *DB) getStringObject(key string) ([]byte, protocal.Reply) {
+func (db *DB) getStringObject(key string) ([]byte, protocol.Reply) {
 	payload, exist := db.GetEntity(key)
 	if !exist {
-		return nil, protocal.NewNullBulkReply()
+		return nil, protocol.NewNullBulkReply()
 	}
 	// 判断底层对象是否为【字节流】
 	bytes, ok := payload.RedisObject.([]byte)
 	if !ok {
-		return nil, protocal.NewWrongTypeErrReply()
+		return nil, protocol.NewWrongTypeErrReply()
 	}
 	return bytes, nil
 }
 
 // https://redis.io/commands/get/     key
-func cmdGet(db *DB, args [][]byte) protocal.Reply {
+func cmdGet(db *DB, args [][]byte) protocol.Reply {
 	if len(args) != 1 {
-		return protocal.NewSyntaxErrReply()
+		return protocol.NewSyntaxErrReply()
 	}
 
 	key := string(args[0])
@@ -43,11 +43,11 @@ func cmdGet(db *DB, args [][]byte) protocal.Reply {
 	if reply != nil {
 		return reply
 	}
-	return protocal.NewBulkReply(bytes)
+	return protocol.NewBulkReply(bytes)
 }
 
 // https://redis.io/commands/set/      key value nx/xx ex/px 60
-func cmdSet(db *DB, args [][]byte) protocal.Reply {
+func cmdSet(db *DB, args [][]byte) protocol.Reply {
 	key := string(args[0])
 	value := args[1]
 
@@ -59,29 +59,29 @@ func cmdSet(db *DB, args [][]byte) protocal.Reply {
 			arg := strings.ToUpper(string(args[i]))
 			if arg == "NX" { // 插入
 				if policy == updatePolicy { // 说明policy 已经被设置过，重复设置（语法错误）
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 				policy = insertPolicy
 			} else if arg == "XX" { // 更新
 				if policy == insertPolicy { // 说明policy 已经被设置过，重复设置（语法错误）
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 				policy = updatePolicy
 			} else if arg == "EX" { // ex in seconds
 
 				if ttl != nolimitedTTL { // 说明  ttl 已经被设置过，重复设置（语法错误）
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 				if i+1 >= len(args) { // 过期时间后面要跟上正整数
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 				ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 				if err != nil {
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 
 				if ttlArg <= 0 {
-					return protocal.NewGenericErrReply("expire time is not a positive integer")
+					return protocol.NewGenericErrReply("expire time is not a positive integer")
 				}
 				// 转成 ms
 				ttl = ttlArg * 1000
@@ -89,25 +89,25 @@ func cmdSet(db *DB, args [][]byte) protocal.Reply {
 			} else if arg == "PX" { // px in milliseconds
 
 				if ttl != nolimitedTTL { // 说明  ttl 已经被设置过，重复设置（语法错误）
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 				if i+1 >= len(args) { // 过期时间后面要跟上正整数
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 				ttlArg, err := strconv.ParseInt(string(args[i+1]), 10, 64)
 				if err != nil {
-					return protocal.NewSyntaxErrReply()
+					return protocol.NewSyntaxErrReply()
 				}
 
 				if ttlArg <= 0 {
-					return protocal.NewGenericErrReply("expire time is not a positive integer")
+					return protocol.NewGenericErrReply("expire time is not a positive integer")
 				}
 
 				ttl = ttlArg
 				i++ //跳过下一个参数
 			} else {
 				// 发现不符合要求的参数
-				return protocal.NewSyntaxErrReply()
+				return protocol.NewSyntaxErrReply()
 			}
 		}
 	}
@@ -136,12 +136,14 @@ func cmdSet(db *DB, args [][]byte) protocal.Reply {
 		} else { // 设定key不过期
 			db.Persist(key)
 		}
-		return protocal.NewOkReply()
+		return protocol.NewOkReply()
 	}
 
-	return protocal.NewNullBulkReply()
+	return protocol.NewNullBulkReply()
 }
 func init() {
+	// 获取值
 	registerCommand("Get", cmdGet)
+	// 设置值
 	registerCommand("Set", cmdSet)
 }

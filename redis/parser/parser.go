@@ -8,13 +8,13 @@ import (
 	"runtime/debug"
 	"strconv"
 
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/logger"
 )
 
 type Payload struct {
 	Err   error
-	Reply protocal.Reply
+	Reply protocol.Reply
 }
 
 // 从reader读取数据&解析，并保存到chan中，供外部读取
@@ -69,7 +69,7 @@ func parse(r io.Reader, out chan<- *Payload) {
 		default:
 			args := bytes.Split(line, []byte{' '})
 			out <- &Payload{
-				Reply: protocal.NewMultiBulkReply(args),
+				Reply: protocol.NewMultiBulkReply(args),
 			}
 		}
 	}
@@ -134,7 +134,7 @@ func parseArrays(header []byte, reader *bufio.Reader, out chan<- *Payload) error
 
 	out <- &Payload{
 		Err:   nil,
-		Reply: protocal.NewMultiBulkReply(lines),
+		Reply: protocol.NewMultiBulkReply(lines),
 	}
 	return nil
 }

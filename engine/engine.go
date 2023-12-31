@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 
 	"github.com/gofish2020/easyredis/redis/connection"
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/conf"
 	"github.com/gofish2020/easyredis/tool/logger"
 )
@@ -37,21 +37,21 @@ func NewEngine() *Engine {
 }
 
 // 选中指定的 *DB
-func (e *Engine) selectDB(index int) (*DB, *protocal.GenericErrReply) {
+func (e *Engine) selectDB(index int) (*DB, *protocol.GenericErrReply) {
 	if index < 0 || index >= len(e.dbSet) {
-		return nil, protocal.NewGenericErrReply("db index is out of range")
+		return nil, protocol.NewGenericErrReply("db index is out of range")
 	}
 
 	return e.dbSet[index].Load().(*DB), nil
 }
 
-// redisCommand 待执行的命令  protocal.Reply 执行结果
-func (e *Engine) Exec(c *connection.KeepConnection, redisCommand [][]byte) (result protocal.Reply) {
+// redisCommand 待执行的命令  protocol.Reply 执行结果
+func (e *Engine) Exec(c *connection.KeepConnection, redisCommand [][]byte) (result protocol.Reply) {
 
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Warn(fmt.Sprintf("error occurs: %v\n%s", err, string(debug.Stack())))
-			result = protocal.NewUnknownErrReply()
+			result = protocol.NewUnknownErrReply()
 		}
 	}()
 	commandName := strings.ToLower(string(redisCommand[0]))
@@ -63,7 +63,7 @@ func (e *Engine) Exec(c *connection.KeepConnection, redisCommand [][]byte) (resu
 	}
 	// 校验密码
 	if !checkPasswd(c) {
-		return protocal.NewGenericErrReply("Authentication required")
+		return protocol.NewGenericErrReply("Authentication required")
 	}
 
 	// 基础命令

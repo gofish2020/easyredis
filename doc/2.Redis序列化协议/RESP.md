@@ -108,7 +108,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 			}
 
 			// 解析出错 protocol error
-			errReply := protocal.NewGenericErrReply(payload.Err.Error())
+			errReply := protocol.NewGenericErrReply(payload.Err.Error())
 			_, err := conn.Write(errReply.ToBytes())
 			if err != nil {
 				h.activeConn.Delete(conn)
@@ -124,7 +124,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 			continue
 		}
 
-		reply, ok := payload.Reply.(*protocal.MultiBulkReply)
+		reply, ok := payload.Reply.(*protocol.MultiBulkReply)
 		if !ok {
 			logger.Error("require multi bulk protocol")
 			continue
@@ -136,7 +136,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 		if result != nil {
 			conn.Write(result.ToBytes())
 		} else {
-			conn.Write(protocal.NewUnknownErrReply().ToBytes())
+			conn.Write(protocol.NewUnknownErrReply().ToBytes())
 		}
 	}
 }
@@ -190,7 +190,7 @@ func parse(r io.Reader, out chan<- *Payload) {
 		default:
 			args := bytes.Split(line, []byte{' '})
 			out <- &Payload{
-				Reply: protocal.NewMultiBulkReply(args),
+				Reply: protocol.NewMultiBulkReply(args),
 			}
 		}
 	}

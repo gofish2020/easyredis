@@ -10,7 +10,7 @@ import (
 	"github.com/gofish2020/easyredis/engine"
 	"github.com/gofish2020/easyredis/redis/connection"
 	"github.com/gofish2020/easyredis/redis/parser"
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/logger"
 )
 
@@ -51,7 +51,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 			}
 
 			// 解析出错 protocol error
-			errReply := protocal.NewGenericErrReply(payload.Err.Error())
+			errReply := protocol.NewGenericErrReply(payload.Err.Error())
 			_, err := keepConn.Write(errReply.ToBytes())
 			if err != nil {
 				h.activeConn.Delete(keepConn)
@@ -67,7 +67,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 			continue
 		}
 
-		reply, ok := payload.Reply.(*protocal.MultiBulkReply)
+		reply, ok := payload.Reply.(*protocol.MultiBulkReply)
 		if !ok {
 			logger.Error("require multi bulk protocol")
 			continue
@@ -79,7 +79,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 		if result != nil {
 			keepConn.Write(result.ToBytes())
 		} else {
-			keepConn.Write(protocal.NewUnknownErrReply().ToBytes())
+			keepConn.Write(protocol.NewUnknownErrReply().ToBytes())
 		}
 	}
 }

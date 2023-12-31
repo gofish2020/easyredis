@@ -7,7 +7,7 @@ import (
 	"github.com/gofish2020/easyredis/datastruct/dict"
 	"github.com/gofish2020/easyredis/engine/payload"
 	"github.com/gofish2020/easyredis/redis/connection"
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/logger"
 	"github.com/gofish2020/easyredis/tool/timewheel"
 )
@@ -41,19 +41,19 @@ func (db *DB) SetIndex(index int) {
 	db.index = index
 }
 
-func (db *DB) Exec(c *connection.KeepConnection, redisCommand [][]byte) protocal.Reply {
+func (db *DB) Exec(c *connection.KeepConnection, redisCommand [][]byte) protocol.Reply {
 
 	return db.execNormalCommand(c, redisCommand)
 }
 
-func (db *DB) execNormalCommand(c *connection.KeepConnection, redisCommand [][]byte) protocal.Reply {
+func (db *DB) execNormalCommand(c *connection.KeepConnection, redisCommand [][]byte) protocol.Reply {
 
 	cmdName := strings.ToLower(string(redisCommand[0]))
 
 	// 从命令注册中心，获取命令的执行函数
 	command, ok := commandCenter[cmdName]
 	if !ok {
-		return protocal.NewGenericErrReply("unknown command '" + cmdName + "'")
+		return protocol.NewGenericErrReply("unknown command '" + cmdName + "'")
 	}
 	fun := command.execFunc
 	return fun(db, redisCommand[1:])
@@ -100,6 +100,21 @@ func (db *DB) Removes(keys ...string) int64 {
 		}
 	}
 	return deleted
+}
+
+func (db *DB) TTL(key string) int64 {
+	val, result := db.ttlDict.Get(key)
+	if !result {
+		return -1
+	}
+	diff := time.Until(val.(time.Time)) / time.Second
+	return int64(diff)
+}
+
+// 判断是否key没有过期时间
+func (db *DB) IsPersist(key string) bool {
+	_, result := db.ttlDict.Get(key)
+	return !result
 }
 
 // 判断key是否已过期

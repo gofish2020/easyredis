@@ -2,22 +2,22 @@ package engine
 
 import (
 	"github.com/gofish2020/easyredis/redis/connection"
-	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/conf"
 )
 
 /*
 常用：系统命令
 */
-func Ping(redisArgs [][]byte) protocal.Reply {
+func Ping(redisArgs [][]byte) protocol.Reply {
 
 	if len(redisArgs) == 0 { // 不带参数
-		return protocal.NewPONGReply()
+		return protocol.NewPONGReply()
 	} else if len(redisArgs) == 1 { // 带参数1个
-		return protocal.NewBulkReply(redisArgs[0])
+		return protocol.NewBulkReply(redisArgs[0])
 	}
 	// 否则，回复命令格式错误
-	return protocal.NewArgNumErrReply("ping")
+	return protocol.NewArgNumErrReply("ping")
 }
 
 func checkPasswd(c *connection.KeepConnection) bool {
@@ -29,20 +29,20 @@ func checkPasswd(c *connection.KeepConnection) bool {
 	return c.GetPassword() == conf.GlobalConfig.RequirePass
 }
 
-func Auth(c *connection.KeepConnection, redisArgs [][]byte) protocal.Reply {
+func Auth(c *connection.KeepConnection, redisArgs [][]byte) protocol.Reply {
 	if len(redisArgs) != 1 {
-		return protocal.NewArgNumErrReply("auth")
+		return protocol.NewArgNumErrReply("auth")
 	}
 
 	if conf.GlobalConfig.RequirePass == "" {
-		return protocal.NewGenericErrReply("No authorization is required")
+		return protocol.NewGenericErrReply("No authorization is required")
 	}
 
 	password := string(redisArgs[0])
 	if conf.GlobalConfig.RequirePass != password {
-		return protocal.NewGenericErrReply("Auth failed, password is wrong")
+		return protocol.NewGenericErrReply("Auth failed, password is wrong")
 	}
 
 	c.SetPassword(password)
-	return protocal.NewOkReply()
+	return protocol.NewOkReply()
 }

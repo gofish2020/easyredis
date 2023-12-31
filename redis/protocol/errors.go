@@ -1,4 +1,4 @@
-package protocal
+package protocol
 
 import "github.com/gofish2020/easyredis/utils"
 
