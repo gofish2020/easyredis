@@ -63,3 +63,16 @@ func (n *NullBulkReply) ToBytes() []byte {
 func NewNullBulkReply() *NullBulkReply {
 	return nullBulkReply
 }
+
+// Integer   :3\r\n
+type IntegerReply struct {
+	Integer int64
+}
+
+func (i *IntegerReply) ToBytes() []byte {
+	return []byte(":" + strconv.FormatInt(i.Integer, 10) + utils.CRLF)
+}
+
+func NewIntegerReply(integer int64) *IntegerReply {
+	return &IntegerReply{Integer: integer}
+}

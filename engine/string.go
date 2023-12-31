@@ -3,6 +3,7 @@ package engine
 import (
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gofish2020/easyredis/engine/payload"
 	"github.com/gofish2020/easyredis/redis/protocal"
@@ -127,11 +128,14 @@ func cmdSet(db *DB, args [][]byte) protocal.Reply {
 		result = db.PutIfExist(key, &entity)
 	}
 
-	if ttl != nolimitedTTL {
+	if result > 0 { // 1 表示存储成功
 		//TODO： 过期时间处理
-	}
-
-	if result > 0 {
+		if ttl != nolimitedTTL { // 设定key过期
+			expireTime := time.Now().Add(time.Duration(ttl) * time.Millisecond)
+			db.Expire(key, expireTime)
+		} else { // 设定key不过期
+			db.Persist(key)
+		}
 		return protocal.NewOkReply()
 	}
 

@@ -78,8 +78,8 @@ func (c *ConcurrentDict) getShard(key string) *shard {
 // 获取key保存的值
 func (c *ConcurrentDict) Get(key string) (val interface{}, exist bool) {
 	shd := c.getShard(key)
-	shd.mu.Lock()
-	defer shd.mu.Unlock()
+	shd.mu.RLock()
+	defer shd.mu.RUnlock()
 	val, exist = shd.m[key]
 	return
 }
@@ -89,8 +89,28 @@ func (c *ConcurrentDict) Count() int {
 	return int(c.count.Load())
 }
 
+// 数量+1
 func (c *ConcurrentDict) addCount() {
 	c.count.Add(1)
+}
+
+// 数量-1
+func (c *ConcurrentDict) subCount() {
+	c.count.Add(-1)
+}
+
+// 删除key
+func (c *ConcurrentDict) Delete(key string) (interface{}, int) {
+	shd := c.getShard(key)
+	shd.mu.Lock()
+	defer shd.mu.Unlock()
+
+	if val, ok := shd.m[key]; ok {
+		delete(shd.m, key)
+		c.subCount()
+		return val, 1
+	}
+	return nil, 0
 }
 
 // 保存key(insert or update)

@@ -2,11 +2,14 @@ package engine
 
 import (
 	"strings"
+	"time"
 
 	"github.com/gofish2020/easyredis/datastruct/dict"
 	"github.com/gofish2020/easyredis/engine/payload"
 	"github.com/gofish2020/easyredis/redis/connection"
 	"github.com/gofish2020/easyredis/redis/protocal"
+	"github.com/gofish2020/easyredis/tool/logger"
+	"github.com/gofish2020/easyredis/tool/timewheel"
 )
 
 const (
@@ -56,6 +59,63 @@ func (db *DB) execNormalCommand(c *connection.KeepConnection, redisCommand [][]b
 	return fun(db, redisCommand[1:])
 }
 
+func genExpireTask(key string) string {
+	return "expire:" + key
+}
+
+// 设定key过期
+func (db *DB) Expire(key string, expireTime time.Time) {
+
+	// 在ttlDict中设置key的过期时间
+	db.ttlDict.Put(key, expireTime)
+	// 设置过期延迟任务
+	timewheel.AddAt(expireTime, genExpireTask(key), func() {
+		logger.Debug("expire: " + key)
+		db.IsExpire(key)
+	})
+}
+
+// 设定key不过期
+func (db *DB) Persist(key string) {
+	db.ttlDict.Delete(key)
+	timewheel.Cancel(genExpireTask(key))
+}
+
+// 删除key(单个)
+func (db *DB) Remove(key string) {
+	db.ttlDict.Delete(key)
+	db.dataDict.Delete(key)
+	// 从时间轮中删除任务
+	timewheel.Cancel(genExpireTask(key))
+}
+
+// 删除多个key 返回成功删除个数
+func (db *DB) Removes(keys ...string) int64 {
+	var deleted int64 = 0
+	for _, key := range keys {
+		_, exist := db.dataDict.Get(key)
+		if exist {
+			deleted++
+			db.Remove(key)
+		}
+	}
+	return deleted
+}
+
+// 判断key是否已过期
+func (db *DB) IsExpire(key string) bool {
+	val, result := db.ttlDict.Get(key)
+	if !result {
+		return false
+	}
+	expireTime, _ := val.(time.Time)
+	isExpire := time.Now().After(expireTime)
+	if isExpire { // 如果过期，主动删除
+		db.Remove(key)
+	}
+	return isExpire
+}
+
 /************** Data Access ***************/
 // 获取内存中的数据
 func (db *DB) GetEntity(key string) (*payload.DataEntity, bool) {
@@ -65,7 +125,11 @@ func (db *DB) GetEntity(key string) (*payload.DataEntity, bool) {
 	if !exist {
 		return nil, false
 	}
-
+	// key是否过期（主动检测一次）
+	if db.IsExpire(key) {
+		return nil, false
+	}
+	// 返回内存数据
 	dataEntity, ok := val.(*payload.DataEntity)
 	if !ok {
 		return nil, false
