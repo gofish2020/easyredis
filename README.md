@@ -6,7 +6,7 @@
 - [x] [easyredis之TCP服务](https://github.com/gofish2020/easyredis/blob/main/doc/1.tcp%E6%9C%8D%E5%8A%A1/tcp%E6%9C%8D%E5%8A%A1.md) 
 - [x] [easyredis之网络请求序列化协议（RESP）](https://github.com/gofish2020/easyredis/blob/main/doc/2.Redis%E5%BA%8F%E5%88%97%E5%8C%96%E5%8D%8F%E8%AE%AE/RESP.md)
 - [x] [easyredis之内存数据库](https://github.com/gofish2020/easyredis/blob/main/doc/3.%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98%E6%95%B0%E6%8D%AE%E5%BA%93.md)
-- [x] easyredis之过期时间 (时间轮实现)
+- [x] [easyredis之过期时间 (时间轮实现)](https://github.com/gofish2020/easyredis/blob/main/doc/4.%E5%BB%B6%E8%BF%9F%E7%AE%97%E6%B3%95(%E6%97%B6%E9%97%B4%E8%BD%AE)/%E6%97%B6%E9%97%B4%E8%BD%AE.md)
 - [ ] easyredis之持久化 （AOF实现）
 - [ ] easyredis之发布订阅功能
 - [ ] easyredis之有序集合（跳表实现）
