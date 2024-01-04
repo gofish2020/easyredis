@@ -4,13 +4,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofish2020/easyredis/abstract"
 	"github.com/gofish2020/easyredis/datastruct/dict"
 	"github.com/gofish2020/easyredis/engine/payload"
-	"github.com/gofish2020/easyredis/redis/connection"
 	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/logger"
 	"github.com/gofish2020/easyredis/tool/timewheel"
 )
+
+type CmdLine = [][]byte
 
 const (
 	dataDictSize = 1 << 16
@@ -26,13 +28,29 @@ type DB struct {
 	dataDict *dict.ConcurrentDict
 	// 过期字典（协程安全）
 	ttlDict *dict.ConcurrentDict
+
+	writeAof func(redisCommand [][]byte)
+
+	delay *timewheel.Delay
 }
 
 // 构造db对象
-func newDB() *DB {
+func newDB(delay *timewheel.Delay) *DB {
 	db := &DB{
 		dataDict: dict.NewConcurrentDict(dataDictSize),
 		ttlDict:  dict.NewConcurrentDict(ttlDictSize),
+		writeAof: func(redisCommand [][]byte) {},
+		delay:    delay,
+	}
+	return db
+}
+
+func newBasicDB(delay *timewheel.Delay) *DB {
+	db := &DB{
+		dataDict: dict.NewConcurrentDict(dataDictSize),
+		ttlDict:  dict.NewConcurrentDict(ttlDictSize),
+		writeAof: func(redisCommand [][]byte) {},
+		delay:    delay,
 	}
 	return db
 }
@@ -41,12 +59,12 @@ func (db *DB) SetIndex(index int) {
 	db.index = index
 }
 
-func (db *DB) Exec(c *connection.KeepConnection, redisCommand [][]byte) protocol.Reply {
+func (db *DB) Exec(c abstract.Connection, redisCommand [][]byte) protocol.Reply {
 
 	return db.execNormalCommand(c, redisCommand)
 }
 
-func (db *DB) execNormalCommand(c *connection.KeepConnection, redisCommand [][]byte) protocol.Reply {
+func (db *DB) execNormalCommand(c abstract.Connection, redisCommand [][]byte) protocol.Reply {
 
 	cmdName := strings.ToLower(string(redisCommand[0]))
 
@@ -63,22 +81,34 @@ func genExpireTask(key string) string {
 	return "expire:" + key
 }
 
+func (db *DB) addDelayAt(key string, expireTime time.Time) {
+	if db.delay != nil {
+		db.delay.AddAt(expireTime, genExpireTask(key), func() {
+			logger.Debug("expire: " + key)
+			db.IsExpire(key)
+		})
+	}
+}
+
 // 设定key过期
-func (db *DB) Expire(key string, expireTime time.Time) {
+func (db *DB) ExpireAt(key string, expireTime time.Time) {
 
 	// 在ttlDict中设置key的过期时间
 	db.ttlDict.Put(key, expireTime)
 	// 设置过期延迟任务
-	timewheel.AddAt(expireTime, genExpireTask(key), func() {
-		logger.Debug("expire: " + key)
-		db.IsExpire(key)
-	})
+	db.addDelayAt(key, expireTime)
+}
+
+func (db *DB) cancelDelay(key string) {
+	if db.delay != nil {
+		db.delay.Cancel(genExpireTask(key))
+	}
 }
 
 // 设定key不过期
 func (db *DB) Persist(key string) {
 	db.ttlDict.Delete(key)
-	timewheel.Cancel(genExpireTask(key))
+	db.cancelDelay(key)
 }
 
 // 删除key(单个)
@@ -86,7 +116,7 @@ func (db *DB) Remove(key string) {
 	db.ttlDict.Delete(key)
 	db.dataDict.Delete(key)
 	// 从时间轮中删除任务
-	timewheel.Cancel(genExpireTask(key))
+	db.cancelDelay(key)
 }
 
 // 删除多个key 返回成功删除个数
@@ -102,6 +132,7 @@ func (db *DB) Removes(keys ...string) int64 {
 	return deleted
 }
 
+// 相对时间（过期）s
 func (db *DB) TTL(key string) int64 {
 	val, result := db.ttlDict.Get(key)
 	if !result {
@@ -109,6 +140,34 @@ func (db *DB) TTL(key string) int64 {
 	}
 	diff := time.Until(val.(time.Time)) / time.Second
 	return int64(diff)
+}
+
+// 相对时间（过期）ms
+func (db *DB) PTTL(key string) int64 {
+	val, result := db.ttlDict.Get(key)
+	if !result {
+		return -1
+	}
+	diff := time.Until(val.(time.Time)) / time.Millisecond
+	return int64(diff)
+}
+
+// 绝对时间（过期） s
+func (db *DB) ExpireTime(key string) int64 {
+	val, result := db.ttlDict.Get(key)
+	if !result {
+		return -1
+	}
+	return val.(time.Time).Unix()
+}
+
+// 绝对时间（过期）ms
+func (db *DB) PExpireTime(key string) int64 {
+	val, result := db.ttlDict.Get(key)
+	if !result {
+		return -1
+	}
+	return val.(time.Time).UnixMilli()
 }
 
 // 判断是否key没有过期时间

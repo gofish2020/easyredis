@@ -18,6 +18,18 @@ type shard struct {
 	mu sync.RWMutex
 }
 
+func (sh *shard) forEach(consumer Consumer) bool {
+	sh.mu.RLock()
+	defer sh.mu.RUnlock()
+	for k, v := range sh.m {
+		res := consumer(k, v)
+		if !res {
+			return false
+		}
+	}
+	return true
+}
+
 // 计算比param参数大，并满足是2的N次幂, 最近接近param的数值size
 func computeCapacity(param int) (size int) {
 	if param <= 16 {
@@ -157,4 +169,17 @@ func (c *ConcurrentDict) PutIfExist(key string, val interface{}) int {
 		return 1 // 更新
 	}
 	return 0
+}
+
+// 遍历
+func (dict *ConcurrentDict) ForEach(consumer Consumer) {
+	if dict == nil {
+		panic("dict is nil")
+	}
+	for _, sh := range dict.shds {
+		keepContinue := sh.forEach(consumer)
+		if !keepContinue {
+			break
+		}
+	}
 }

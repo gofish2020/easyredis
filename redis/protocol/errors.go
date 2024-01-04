@@ -69,3 +69,9 @@ func (s *SyntaxErrReply) ToBytes() []byte {
 func NewSyntaxErrReply() *SyntaxErrReply {
 	return syntaxErrReply
 }
+
+// 是否为Err
+
+func IsErrReply(reply Reply) bool {
+	return reply.ToBytes()[0] == '-'
+}

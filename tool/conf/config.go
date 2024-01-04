@@ -152,3 +152,9 @@ func parse(r io.Reader) *RedisConfig {
 	}
 	return newRedisConfig
 }
+
+func TmpDir() string {
+	dir := GlobalConfig.Dir + "/tmp"
+	utils.MakeDir(dir)
+	return dir
+}

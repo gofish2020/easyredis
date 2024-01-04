@@ -94,5 +94,6 @@ func (h *RedisHandler) Close() error {
 		h.activeConn.Delete(key)
 		return true
 	})
+	h.engine.Close()
 	return nil
 }

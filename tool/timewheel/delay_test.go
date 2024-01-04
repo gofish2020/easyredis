@@ -10,7 +10,8 @@ import (
 func TestAdd(t *testing.T) {
 	ch := make(chan time.Time)
 	beginTime := time.Now()
-	Add(time.Second, "", func() {
+	delay := NewDelay()
+	delay.Add(time.Second, "", func() {
 		logger.Debug("exec task...")
 		ch <- time.Now()
 	})
@@ -23,14 +24,15 @@ func TestAdd(t *testing.T) {
 }
 
 func TestAddTask(t *testing.T) {
-	Add(0*time.Second, "test0", func() {
+	delay := NewDelay()
+	delay.Add(0*time.Second, "test0", func() {
 		logger.Info("0 time.Second running")
 		time.Sleep(10 * time.Second)
 	})
 
 	time.Sleep(1500 * time.Millisecond)
 
-	Add(9*time.Second, "testKey", func() {
+	delay.Add(9*time.Second, "testKey", func() {
 		logger.Info("9 time.Second running")
 		time.Sleep(5 * time.Second)
 	})
@@ -39,18 +41,19 @@ func TestAddTask(t *testing.T) {
 }
 
 func TestCancelTask(t *testing.T) {
-	Add(0*time.Second, "test0", func() {
+	delay := NewDelay()
+	delay.Add(0*time.Second, "test0", func() {
 		logger.Info("0 time.Second running")
 		time.Sleep(10 * time.Second)
 	})
 
 	time.Sleep(1500 * time.Millisecond)
 
-	Add(9*time.Second, "testKey", func() {
+	delay.Add(9*time.Second, "testKey", func() {
 		logger.Info("9 time.Second running")
 		time.Sleep(5 * time.Second)
 	})
 
-	Cancel("testKey")
+	delay.Cancel("testKey")
 	time.Sleep(14 * time.Second)
 }

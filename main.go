@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gofish2020/easyredis/redis"
@@ -30,7 +31,7 @@ func main() {
 	//5. 启动服务
 	err := tcp.Start()
 	if err != nil {
-		logger.Errorf("%v", err)
+		log.Printf("%+v", err)
 		os.Exit(1)
 	}
 

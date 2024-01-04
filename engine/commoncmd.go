@@ -3,7 +3,7 @@ package engine
 import (
 	"strconv"
 
-	"github.com/gofish2020/easyredis/redis/connection"
+	"github.com/gofish2020/easyredis/abstract"
 	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/conf"
 )
@@ -11,7 +11,7 @@ import (
 /*
 基础命令
 */
-func execSelect(c *connection.KeepConnection, redisArgs [][]byte) protocol.Reply {
+func execSelect(c abstract.Connection, redisArgs [][]byte) protocol.Reply {
 	if len(redisArgs) != 1 {
 		return protocol.NewArgNumErrReply("select")
 	}
@@ -25,4 +25,10 @@ func execSelect(c *connection.KeepConnection, redisArgs [][]byte) protocol.Reply
 	c.SetDBIndex(int(dbIndex))
 	return protocol.NewOkReply()
 
+}
+
+// 异步方式重写aof
+func BGRewriteAOF(engine *Engine) protocol.Reply {
+	go engine.aof.Rewrite(newAuxiliaryEngine())
+	return protocol.NewSimpleReply("Background append only file rewriting started")
 }

@@ -27,3 +27,18 @@ func (r *PONGReply) ToBytes() []byte {
 func NewPONGReply() *PONGReply {
 	return pongReply
 }
+
+// 简单字符串
+type SimpleReply struct {
+	Str string
+}
+
+func (s *SimpleReply) ToBytes() []byte {
+	return []byte("+" + s.Str + utils.CRLF)
+}
+
+func NewSimpleReply(str string) *SimpleReply {
+	return &SimpleReply{
+		Str: str,
+	}
+}

@@ -20,7 +20,6 @@ type command struct {
 }
 
 func registerCommand(name string, execFunc ExecFunc) {
-
 	name = strings.ToLower(name)
 	c := &command{}
 	c.commandName = name

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofish2020/easyredis/aof"
 	"github.com/gofish2020/easyredis/engine/payload"
 	"github.com/gofish2020/easyredis/redis/protocol"
 )
@@ -132,9 +133,14 @@ func cmdSet(db *DB, args [][]byte) protocol.Reply {
 		//TODO： 过期时间处理
 		if ttl != nolimitedTTL { // 设定key过期
 			expireTime := time.Now().Add(time.Duration(ttl) * time.Millisecond)
-			db.Expire(key, expireTime)
+			db.ExpireAt(key, expireTime)
+			//写入日志
+			db.writeAof(aof.SetCmd([][]byte{args[0], args[1]}...))
+			db.writeAof(aof.PExpireAtCmd(string(args[0]), expireTime))
 		} else { // 设定key不过期
 			db.Persist(key)
+			//写入日志
+			db.writeAof(aof.SetCmd(args...))
 		}
 		return protocol.NewOkReply()
 	}

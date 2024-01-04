@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"github.com/gofish2020/easyredis/redis/connection"
+	"github.com/gofish2020/easyredis/abstract"
 	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/conf"
 )
@@ -20,7 +20,7 @@ func Ping(redisArgs [][]byte) protocol.Reply {
 	return protocol.NewArgNumErrReply("ping")
 }
 
-func checkPasswd(c *connection.KeepConnection) bool {
+func checkPasswd(c abstract.Connection) bool {
 	// 如果没有配置密码
 	if conf.GlobalConfig.RequirePass == "" {
 		return true
@@ -29,7 +29,7 @@ func checkPasswd(c *connection.KeepConnection) bool {
 	return c.GetPassword() == conf.GlobalConfig.RequirePass
 }
 
-func Auth(c *connection.KeepConnection, redisArgs [][]byte) protocol.Reply {
+func Auth(c abstract.Connection, redisArgs [][]byte) protocol.Reply {
 	if len(redisArgs) != 1 {
 		return protocol.NewArgNumErrReply("auth")
 	}
