@@ -155,7 +155,7 @@ func (aof *AOF) watchChan() {
 所以我们只需要看下 `writeAofRecord`函数即可,其实就是把命令按照`Redis 序列化协议`的格式，写入到文件中。给大家看下更直观的演示图：
 
 ![](image-1.png)
-在看下在 `append.aof`文件中具体的数据格式：
+再看下在 `append.aof`文件中具体的数据格式：
 ![](image-2.png)
 
 这里有个很重要点：因为AOF文件是所有的`*DB`对象复用的文件，写入的redis命令归属于不同的数据库的
