@@ -10,6 +10,7 @@ import (
 	"github.com/gofish2020/easyredis/abstract"
 	"github.com/gofish2020/easyredis/aof"
 	"github.com/gofish2020/easyredis/engine/payload"
+	"github.com/gofish2020/easyredis/pubhub"
 	"github.com/gofish2020/easyredis/redis/protocol"
 	"github.com/gofish2020/easyredis/tool/conf"
 	"github.com/gofish2020/easyredis/tool/logger"
@@ -24,6 +25,10 @@ type Engine struct {
 	delay *timewheel.Delay
 	// Append Only File
 	aof *aof.AOF
+
+	// 订阅
+
+	hub *pubhub.Pubhub
 }
 
 func NewEngine() *Engine {
@@ -43,6 +48,8 @@ func NewEngine() *Engine {
 		// 赋值到 dbSet中
 		engine.dbSet[i] = dbset
 	}
+
+	engine.hub = pubhub.NewPubsub()
 	// 启用AOF日志
 	if conf.GlobalConfig.AppendOnly {
 		// 创建*AOF对象
@@ -86,6 +93,7 @@ func (e *Engine) Exec(c abstract.Connection, redisCommand [][]byte) (result prot
 			result = protocol.NewUnknownErrReply()
 		}
 	}()
+	// 命令小写
 	commandName := strings.ToLower(string(redisCommand[0]))
 	if commandName == "ping" { // https://redis.io/commands/ping/
 		return Ping(redisCommand[1:])
@@ -107,6 +115,12 @@ func (e *Engine) Exec(c abstract.Connection, redisCommand [][]byte) (result prot
 			return protocol.NewGenericErrReply("AppendOnly is false, you can't rewrite aof file")
 		}
 		return BGRewriteAOF(e)
+	case "subscribe":
+		return e.hub.Subscribe(c, redisCommand[1:])
+	case "unsubscribe":
+		return e.hub.Unsubscribe(c, redisCommand[1:])
+	case "publish":
+		return e.hub.Publish(c, redisCommand[1:])
 	}
 
 	// redis 命令处理

@@ -3,6 +3,7 @@ package connection
 import (
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/gofish2020/easyredis/tool/logger"
@@ -20,6 +21,7 @@ var connPool = sync.Pool{
 			dbIndex:  0,
 			c:        nil,
 			password: "",
+			closed:   &atomic.Bool{},
 		}
 	},
 }
@@ -35,6 +37,13 @@ type KeepConnection struct {
 
 	// 当要关闭连接，如果连接还在使用中【等待...】 wait.Wait 是对 sync.WaitGroup的封装
 	writeDataWaitGroup wait.Wait
+
+	// 记录当前连接，订阅的channel
+
+	mu   sync.Mutex
+	subs map[string]struct{}
+
+	closed *atomic.Bool
 }
 
 // 本质就是构建 *KeepConnection对象，存储c net.Conn 以及相关信息
@@ -44,10 +53,14 @@ func NewKeepConnection(c net.Conn) *KeepConnection {
 	if !ok {
 		logger.Error("connection pool make wrong type")
 		return &KeepConnection{
-			c: c,
+			dbIndex:  0,
+			c:        nil,
+			password: "",
+			closed:   &atomic.Bool{},
 		}
 	}
 	conn.c = c
+	conn.closed.Store(false)
 	return conn
 }
 
@@ -69,11 +82,16 @@ func (k *KeepConnection) RemoteAddr() string {
 // 关闭 *KeepConnection 对象
 func (k *KeepConnection) Close() error {
 
+	k.closed.Store(true)
 	k.writeDataWaitGroup.WaitWithTimeOut(timeout) // 等待write结束
 	k.c.Close()
 	k.dbIndex = 0
 	connPool.Put(k)
 	return nil
+}
+
+func (k *KeepConnection) IsClosed() bool {
+	return k.closed.Load()
 }
 
 func (k *KeepConnection) Write(b []byte) (int, error) {
@@ -94,4 +112,42 @@ func (k *KeepConnection) SetPassword(password string) {
 
 func (k *KeepConnection) GetPassword() string {
 	return k.password
+}
+
+func (k *KeepConnection) Subscribe(channel string) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	if k.subs == nil {
+		k.subs = map[string]struct{}{}
+	}
+
+	k.subs[channel] = struct{}{}
+
+}
+
+func (k *KeepConnection) Unsubscribe(channel string) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	if len(k.subs) == 0 {
+		return
+	}
+
+	delete(k.subs, channel)
+}
+
+func (k *KeepConnection) SubCount() int {
+	return len(k.subs)
+}
+
+func (k *KeepConnection) GetChannels() []string {
+
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	var result []string
+	for channel := range k.subs {
+		result = append(result, channel)
+	}
+	return result
 }

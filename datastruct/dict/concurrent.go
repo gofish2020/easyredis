@@ -1,9 +1,10 @@
 package dict
 
 import (
-	"math"
 	"sync"
 	"sync/atomic"
+
+	"github.com/gofish2020/easyredis/utils"
 )
 
 // 并发安全的字典
@@ -30,38 +31,9 @@ func (sh *shard) forEach(consumer Consumer) bool {
 	return true
 }
 
-// 计算比param参数大，并满足是2的N次幂, 最近接近param的数值size
-func computeCapacity(param int) (size int) {
-	if param <= 16 {
-		return 16
-	}
-	n := param - 1
-	n |= n >> 1
-	n |= n >> 2
-	n |= n >> 4
-	n |= n >> 8
-	n |= n >> 16
-	if n < 0 {
-		return math.MaxInt32
-	}
-	return n + 1
-}
-
-// 计算key的hashcode
-const prime32 = uint32(16777619)
-
-func fnv32(key string) uint32 {
-	hash := uint32(2166136261)
-	for i := 0; i < len(key); i++ {
-		hash *= prime32
-		hash ^= uint32(key[i])
-	}
-	return hash
-}
-
 // 构造字典对象
 func NewConcurrentDict(shardCount int) *ConcurrentDict {
-	shardCount = computeCapacity(shardCount)
+	shardCount = utils.ComputeCapacity(shardCount)
 
 	dict := &ConcurrentDict{}
 	shds := make([]*shard, shardCount)
@@ -84,7 +56,7 @@ func (c *ConcurrentDict) index(code uint32) uint32 {
 
 // 获取key对应的shard
 func (c *ConcurrentDict) getShard(key string) *shard {
-	return c.shds[c.index(fnv32(key))]
+	return c.shds[c.index(utils.Fnv32(key))]
 }
 
 // 获取key保存的值

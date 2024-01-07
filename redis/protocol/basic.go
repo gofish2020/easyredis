@@ -42,3 +42,17 @@ func NewSimpleReply(str string) *SimpleReply {
 		Str: str,
 	}
 }
+
+// 空回复
+type NoReply struct{}
+
+var noBytes = []byte("")
+
+// ToBytes marshal redis.Reply
+func (r *NoReply) ToBytes() []byte {
+	return noBytes
+}
+
+func NewNoReply() *NoReply {
+	return &NoReply{}
+}
