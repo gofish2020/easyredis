@@ -49,6 +49,8 @@ func publisMsg(channel string, msg string) []byte {
 }
 
 type Pubhub struct {
+
+	// 自定义实现的map
 	dataDict dict.ConcurrentDict
 
 	// 该锁的颗粒度太大
@@ -72,11 +74,12 @@ func (p *Pubhub) Subscribe(c abstract.Connection, args [][]byte) protocol.Reply 
 		return protocol.NewArgNumErrReply("subscribe")
 	}
 
+	// 通道名
 	keys := make([]string, 0, len(args))
 	for _, arg := range args {
 		keys = append(keys, string(arg))
 	}
-
+	// 加锁
 	p.locker.Locks(keys...)
 	defer p.locker.Unlocks(keys...)
 
@@ -166,7 +169,7 @@ func (p *Pubhub) Publish(self abstract.Connection, args [][]byte) protocol.Reply
 	}
 
 	channelName := string(args[0])
-
+	// 加锁
 	p.locker.Locks(channelName)
 	defer p.locker.Unlocks(channelName)
 
