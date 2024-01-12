@@ -3,9 +3,24 @@ package protocol
 import (
 	"bytes"
 	"strconv"
+	"strings"
 
 	"github.com/gofish2020/easyredis/utils"
 )
+
+// 空数组 empty array
+var emptyMultiBulkReply = &EmptyMultiBulkReply{}
+
+type EmptyMultiBulkReply struct {
+}
+
+func (e *EmptyMultiBulkReply) ToBytes() []byte {
+	return []byte("*0\r\n")
+}
+
+func NewEmptyMultiBulkReply() *EmptyMultiBulkReply {
+	return emptyMultiBulkReply
+}
 
 // 二进制安全 多个bulk *2\r\n$5\r\nhello\r\n$5\r\nworld\r\n
 type MultiBulkReply struct {
@@ -75,4 +90,28 @@ func (i *IntegerReply) ToBytes() []byte {
 
 func NewIntegerReply(integer int64) *IntegerReply {
 	return &IntegerReply{Integer: integer}
+}
+
+// Mix
+
+func NewMixReply() *MixReply {
+	return &MixReply{}
+}
+
+type MixReply struct {
+	replies []Reply
+}
+
+func (m *MixReply) ToBytes() []byte {
+	num := len(m.replies)
+	var str strings.Builder
+	str.WriteString("*" + strconv.Itoa(num) + utils.CRLF) // example: *3\r\n
+	for _, reply := range m.replies {
+		str.Write(reply.ToBytes())
+	}
+	return []byte(str.String())
+}
+
+func (m *MixReply) Append(replies ...Reply) {
+	m.replies = append(m.replies, replies...)
 }
