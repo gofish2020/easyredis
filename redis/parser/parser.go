@@ -66,6 +66,10 @@ func parse(r io.Reader, out chan<- *Payload) {
 				close(out)
 				return
 			}
+		case '+':
+			out <- &Payload{
+				Reply: protocol.NewSimpleReply(string(line[1:])),
+			}
 		default:
 			args := bytes.Split(line, []byte{' '})
 			out <- &Payload{
