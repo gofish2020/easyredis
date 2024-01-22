@@ -645,38 +645,64 @@ func cmdZRemRangeByRank(db *DB, args [][]byte) protocol.Reply {
 	}
 	return protocol.NewIntegerReply(removed)
 }
+
+func undoZAdd(db *DB, args [][]byte) []CmdLine {
+	key := string(args[0])
+	size := (len(args) - 1) / 2
+	members := make([]string, size)
+	for i := 0; i < size; i++ {
+		members[i] = string(args[2*i+2])
+	}
+	return rollbackZSetMembers(db, key, members...)
+}
+
+func undoZIncr(db *DB, args [][]byte) []CmdLine {
+	key := string(args[0])
+	member := string(args[2])
+	return rollbackZSetMembers(db, key, member)
+}
+
+func undoZRem(db *DB, args [][]byte) []CmdLine {
+	key := string(args[0])
+	members := make([]string, len(args)-1)
+	fieldArgs := args[1:]
+	for i, v := range fieldArgs {
+		members[i] = string(v)
+	}
+	return rollbackZSetMembers(db, key, members...)
+}
 func init() {
-	// 新增 score member
-	registerCommand("ZAdd", cmdZAdd)
-	// 获取member 分值
-	registerCommand("ZScore", cmdZScore)
-	// 增加分值
-	registerCommand("ZIncrBy", cmdZIncrBy)
-	// 获取member索引
-	registerCommand("ZRank", cmdZRank)       //正序索引
-	registerCommand("ZRevRank", cmdZRevRank) //倒序索引
-	// 分值范围内，member个数
-	registerCommand("ZCount", cmdZCount)
+	// 新增 zadd key score member
+	registerCommand("ZAdd", cmdZAdd, writeFirstKey, -4, undoZAdd)
+	// 获取member 分值 zscore key member
+	registerCommand("ZScore", cmdZScore, readFirstKey, 3, nil)
+	// 增加分值 zincrby key delta member
+	registerCommand("ZIncrBy", cmdZIncrBy, writeFirstKey, 4, undoZIncr)
+	// 获取member索引 zrank key member
+	registerCommand("ZRank", cmdZRank, readFirstKey, 3, nil)       //正序索引
+	registerCommand("ZRevRank", cmdZRevRank, readFirstKey, 3, nil) //倒序索引
+	// 分值范围内，member个数 zcount key -inf inf
+	registerCommand("ZCount", cmdZCount, readFirstKey, 4, nil)
 
-	// 总共有多少元素
-	registerCommand("ZCard", cmdZCard)
+	// 总共有多少元素 zcard key
+	registerCommand("ZCard", cmdZCard, readFirstKey, 2, nil)
 
-	// 根据[索引]扫描链表内元素 [start,stop]
-	registerCommand("ZRange", cmdZRange)       // 正序元素
-	registerCommand("ZRevRange", cmdZRevRange) // 倒序元素
+	// 根据[索引]扫描链表内元素 [start,stop] zrange key 0 1 [withscores]
+	registerCommand("ZRange", cmdZRange, readFirstKey, -4, nil)       // 正序元素
+	registerCommand("ZRevRange", cmdZRevRange, readFirstKey, -4, nil) // 倒序元素
 
-	// 根据【分值】扫描链表
-	registerCommand("ZRangeByScore", cmdZRangeByScore)       // 正序
-	registerCommand("ZRevRangeByScore", cmdZRevRangeByScore) // 倒序
+	// 根据【分值】扫描链表 ZRANGEBYSCORE key min max [WITHSCORES] [LIMIT offset count]
+	registerCommand("ZRangeByScore", cmdZRangeByScore, readFirstKey, -4, nil)       // 正序
+	registerCommand("ZRevRangeByScore", cmdZRevRangeByScore, readFirstKey, -4, nil) // 倒序
 
-	// 删除最小分值
-	registerCommand("ZPopMin", cmdZPopMin)
+	// 删除最小分值 ZPOPMIN key [count]
+	registerCommand("ZPopMin", cmdZPopMin, writeFirstKey, -2, rollbackFirstKey)
 
-	// 删除member
-	registerCommand("ZRem", cmdZRem)
+	// 删除member ZREM key member [member ...]
+	registerCommand("ZRem", cmdZRem, writeFirstKey, -3, undoZRem)
 
-	// 范围删除
-	registerCommand("ZRemRangeByScore", cmdZRemRangeByScore) // 利用分值删除
-	registerCommand("ZRemRangeByRank", cmdZRemRangeByRank)   //利用索引删除
+	// 范围删除 ZREMRANGEBYSCORE key min max
+	registerCommand("ZRemRangeByScore", cmdZRemRangeByScore, writeFirstKey, 4, rollbackFirstKey) // 利用分值删除
+	registerCommand("ZRemRangeByRank", cmdZRemRangeByRank, writeFirstKey, 4, rollbackFirstKey)   //利用索引删除
 
 }

@@ -13,4 +13,18 @@ type Connection interface {
 	Unsubscribe(channel string)
 	SubCount() int
 	GetChannels() []string
+
+	// transaction
+
+	IsTransaction() bool
+	SetTransaction(bool)
+
+	EnqueueCmd(redisCommand [][]byte)
+	GetQueuedCmdLine() [][][]byte
+
+	GetWatchKey() map[string]int64
+	CleanWatchKey()
+
+	AddTxError(err error)
+	GetTxErrors() []error
 }

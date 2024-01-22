@@ -257,6 +257,16 @@ func execPExpire(db *DB, args [][]byte) protocol.Reply {
 	return protocol.NewIntegerReply(1)
 }
 
+func toTTLCmd(db *DB, key string) *protocol.MultiBulkReply {
+	raw, exists := db.ttlDict.Get(key)
+	if !exists {
+		// has no TTL
+		return protocol.NewMultiBulkReply(aof.Persist([]byte(key)))
+	}
+	expireTime, _ := raw.(time.Time)
+	return protocol.NewMultiBulkReply(aof.PExpireAtCmd(key, expireTime))
+}
+
 // 在当前数据库中，找匹配的key
 func execKeys(db *DB, args [][]byte) protocol.Reply {
 	pattern, err := wildcard.CompilePattern(string(args[0]))
@@ -273,29 +283,45 @@ func execKeys(db *DB, args [][]byte) protocol.Reply {
 
 	return protocol.NewMultiBulkReply(result)
 }
+
+func undoDel(db *DB, args [][]byte) []CmdLine {
+	keys := make([]string, len(args))
+	for i, v := range args {
+		keys[i] = string(v)
+	}
+	return rollbackGivenKeys(db, keys...)
+}
+
+func undoExpire(db *DB, args [][]byte) []CmdLine {
+	key := string(args[0])
+	return []CmdLine{
+		toTTLCmd(db, key).RedisCommand,
+	}
+}
+
 func init() {
-	// 删除
-	registerCommand("Del", execDel)
-	// 设置过期 s
-	registerCommand("Expire", execExpire)
-	// 设定过期 ms
-	registerCommand("PExpire", execPExpire)
-	// 获取过期时间戳(Unix timestamp) s
-	registerCommand("ExpireTime", execExpireTime)
+	// 删除 DEL key [key ...]
+	registerCommand("Del", execDel, writeAllKey, -2, undoDel)
+	// 设置过期  EXPIRE key seconds [NX | XX | GT | LT]
+	registerCommand("Expire", execExpire, writeFirstKey, -3, undoExpire)
+	// 设定过期 ms PEXPIRE key milliseconds [NX | XX | GT | LT]
+	registerCommand("PExpire", execPExpire, writeFirstKey, -3, undoExpire)
+	// 获取过期时间戳(Unix timestamp) s  EXPIRETIME key
+	registerCommand("ExpireTime", execExpireTime, readFirstKey, 2, nil)
 	// 获取过期时间戳(Unix timestamp) ms
-	registerCommand("PExpireTime", execPExpireTime)
-	// 设定过期（时间戳 Unix timestamp）ms
-	registerCommand("PExpireAt", execPExpireAt)
+	registerCommand("PExpireTime", execPExpireTime, readFirstKey, 2, nil)
+	// 设定过期（时间戳 Unix timestamp）ms PEXPIREAT key unix-time-milliseconds [NX | XX | GT | LT]
+	registerCommand("PExpireAt", execPExpireAt, writeFirstKey, -3, undoExpire)
 	// 设定过期（时间戳 Unix timestamp）s
-	registerCommand("ExpireAt", execExpireAt)
-	// 设置永不过期
-	registerCommand("Persist", execPersist)
-	// 获取剩余过期时间(s)
-	registerCommand("TTL", execTTL)
+	registerCommand("ExpireAt", execExpireAt, writeFirstKey, -3, undoExpire)
+	// 设置永不过期 PERSIST key
+	registerCommand("Persist", execPersist, writeFirstKey, 2, undoExpire)
+	// 获取剩余过期时间(s) TTL key
+	registerCommand("TTL", execTTL, readFirstKey, 2, nil)
 	// 获取剩余过期时间(ms)
-	registerCommand("PTTL", execPTTL)
-	// 判断key是否存在
-	registerCommand("Exists", execExists)
-	// 获取所有的key
-	registerCommand("Keys", execKeys)
+	registerCommand("PTTL", execPTTL, readFirstKey, 2, nil)
+	// 判断key是否存在 EXISTS key [key ...]
+	registerCommand("Exists", execExists, readAllKey, -2, nil)
+	// 获取所有的key KEYS pattern
+	registerCommand("Keys", execKeys, noKey, 2, nil)
 }

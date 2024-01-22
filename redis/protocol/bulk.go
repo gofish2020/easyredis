@@ -93,7 +93,6 @@ func NewIntegerReply(integer int64) *IntegerReply {
 }
 
 // Mix
-
 func NewMixReply() *MixReply {
 	return &MixReply{}
 }

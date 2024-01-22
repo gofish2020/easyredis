@@ -149,7 +149,7 @@ func cmdSet(db *DB, args [][]byte) protocol.Reply {
 }
 func init() {
 	// 获取值
-	registerCommand("Get", cmdGet)
+	registerCommand("Get", cmdGet, readFirstKey, 2, nil)
 	// 设置值
-	registerCommand("Set", cmdSet)
+	registerCommand("Set", cmdSet, writeFirstKey, -3, rollbackFirstKey)
 }

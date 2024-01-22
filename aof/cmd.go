@@ -52,6 +52,17 @@ func ZRemRangeByRank(args ...[]byte) [][]byte {
 	return utils.BuildCmdLine("ZREMRANGEBYRANK", args...)
 }
 
+// del
+func Del(args ...[]byte) [][]byte {
+	return utils.BuildCmdLine("DEL", args...)
+}
+
+// persist
+func Persist(args ...[]byte) [][]byte {
+	return utils.BuildCmdLine("PERSIST", args...)
+}
+
+// 内存对象转换成 redis命令
 func EntityToCmd(key string, entity *payload.DataEntity) *protocol.MultiBulkReply {
 	if entity == nil {
 		return nil

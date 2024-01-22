@@ -56,3 +56,16 @@ func (r *NoReply) ToBytes() []byte {
 func NewNoReply() *NoReply {
 	return &NoReply{}
 }
+
+// +QUEUED
+var queuedReply = &QueuedReply{}
+
+type QueuedReply struct{}
+
+func (r *QueuedReply) ToBytes() []byte {
+	return []byte("+QUEUED" + utils.CRLF)
+}
+
+func NewQueuedReply() *QueuedReply {
+	return queuedReply
+}

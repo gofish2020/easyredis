@@ -21,7 +21,8 @@ var connPool = sync.Pool{
 			dbIndex:  0,
 			c:        nil,
 			password: "",
-			closed:   &atomic.Bool{},
+			closed:   atomic.Bool{},
+			trx:      atomic.Bool{},
 		}
 	},
 }
@@ -43,7 +44,13 @@ type KeepConnection struct {
 	mu   sync.Mutex
 	subs map[string]struct{}
 
-	closed *atomic.Bool
+	closed atomic.Bool
+
+	// 事务模式
+	trx      atomic.Bool
+	queue    [][][]byte
+	watchKey map[string]int64
+	txErrors []error
 }
 
 // 本质就是构建 *KeepConnection对象，存储c net.Conn 以及相关信息
@@ -56,11 +63,16 @@ func NewKeepConnection(c net.Conn) *KeepConnection {
 			dbIndex:  0,
 			c:        nil,
 			password: "",
-			closed:   &atomic.Bool{},
+			closed:   atomic.Bool{},
+			trx:      atomic.Bool{},
 		}
 	}
 	conn.c = c
 	conn.closed.Store(false)
+	conn.trx.Store(false)
+	conn.queue = nil
+	conn.txErrors = nil
+	conn.watchKey = nil
 	return conn
 }
 
@@ -150,4 +162,44 @@ func (k *KeepConnection) GetChannels() []string {
 		result = append(result, channel)
 	}
 	return result
+}
+
+func (k *KeepConnection) IsTransaction() bool {
+	return k.trx.Load()
+}
+
+func (k *KeepConnection) SetTransaction(val bool) {
+	if !val { // 取消事务模式，清空队列和watch key
+		k.queue = nil
+		k.watchKey = nil
+		k.txErrors = nil
+	}
+	// 开启事务状态
+	k.trx.Store(val)
+}
+
+func (k *KeepConnection) EnqueueCmd(redisCommand [][]byte) {
+	k.queue = append(k.queue, redisCommand)
+}
+
+func (k *KeepConnection) GetQueuedCmdLine() [][][]byte {
+	return k.queue
+}
+func (k *KeepConnection) GetWatchKey() map[string]int64 {
+	if k.watchKey == nil {
+		k.watchKey = make(map[string]int64)
+	}
+	return k.watchKey
+}
+
+func (k *KeepConnection) CleanWatchKey() {
+	k.watchKey = nil
+}
+
+func (k *KeepConnection) GetTxErrors() []error {
+	return k.txErrors
+}
+
+func (k *KeepConnection) AddTxError(err error) {
+	k.txErrors = append(k.txErrors, err)
 }

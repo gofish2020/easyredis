@@ -10,7 +10,7 @@
 - [x] [easyredis之持久化 （AOF实现）](https://github.com/gofish2020/easyredis/blob/main/doc/5.%E6%8C%81%E4%B9%85%E5%8C%96%E4%B9%8BAOF/aof.md)
 - [x] [easyredis之发布订阅功能](https://github.com/gofish2020/easyredis/blob/main/doc/6.%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85/%E5%8F%91%E5%B8%83%E8%AE%A2%E9%98%85.md)
 - [x] [easyredis之有序集合（跳表实现）](https://github.com/gofish2020/easyredis/blob/main/doc/7.%E8%B7%B3%E8%A1%A8%E7%9A%84%E5%AE%9E%E7%8E%B0/skiplist.md)
-- [ ] easyredis之 pipeline 客户端实现
+- [x] [easyredis之 pipeline 客户端实现](https://github.com/gofish2020/easyredis/blob/main/doc/8.pipeline%E5%AE%A2%E6%88%B7%E7%AB%AF/client.md)
 - [ ] easyredis之事务（原子性/回滚）
 
 ## 分布式

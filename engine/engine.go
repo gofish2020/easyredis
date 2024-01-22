@@ -109,6 +109,9 @@ func (e *Engine) Exec(c abstract.Connection, redisCommand [][]byte) (result prot
 	// 基础命令
 	switch commandName {
 	case "select": // 表示当前连接，要选中哪个db https://redis.io/commands/select/
+		if c != nil && c.IsTransaction() { // 事务模式，不能切换数据库
+			return protocol.NewGenericErrReply("cannot select database within multi")
+		}
 		return execSelect(c, redisCommand[1:])
 	case "bgrewriteaof": // https://redis.io/commands/bgrewriteaof/
 		if !conf.GlobalConfig.AppendOnly {
