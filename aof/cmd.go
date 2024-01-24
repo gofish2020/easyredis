@@ -62,6 +62,11 @@ func Persist(args ...[]byte) [][]byte {
 	return utils.BuildCmdLine("PERSIST", args...)
 }
 
+// Auth
+func Auth(args ...[]byte) [][]byte {
+	return utils.BuildCmdLine("AUTH", args...)
+}
+
 // 内存对象转换成 redis命令
 func EntityToCmd(key string, entity *payload.DataEntity) *protocol.MultiBulkReply {
 	if entity == nil {

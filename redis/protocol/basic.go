@@ -69,3 +69,7 @@ func (r *QueuedReply) ToBytes() []byte {
 func NewQueuedReply() *QueuedReply {
 	return queuedReply
 }
+
+func IsOKReply(reply Reply) bool {
+	return string(reply.ToBytes()) == "+OK\r\n"
+}

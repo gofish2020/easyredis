@@ -70,6 +70,7 @@ func NewRedisClient(addr string) (*RedisClent, error) {
 	rc.waitSend = make(chan *request, maxChanSize)
 	rc.waitResult = make(chan *request, maxChanSize)
 	rc.addr = addr
+	rc.connStatus.Store(connCreated)
 	return &rc, nil
 }
 
@@ -127,7 +128,7 @@ func (rc *RedisClent) reconnect() {
 		}
 	}
 	// 服务端连不上，说明服务可能挂了（or 网络问题 and so on...)
-	if conn == nil { 
+	if conn == nil {
 		rc.Stop()
 		return
 	}
