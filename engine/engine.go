@@ -53,7 +53,7 @@ func NewEngine() *Engine {
 	// 启用AOF日志
 	if conf.GlobalConfig.AppendOnly {
 		// 创建*AOF对象
-		aof, err := aof.NewAOF(conf.GlobalConfig.AppendFilename, engine, true, conf.GlobalConfig.AppendFsync)
+		aof, err := aof.NewAOF(conf.GlobalConfig.Dir+"/"+conf.GlobalConfig.AppendFilename, engine, true, conf.GlobalConfig.AppendFsync)
 		if err != nil {
 			panic(err)
 		}

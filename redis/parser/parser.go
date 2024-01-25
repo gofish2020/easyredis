@@ -66,9 +66,24 @@ func parse(r io.Reader, out chan<- *Payload) {
 				close(out)
 				return
 			}
+			// + 成功
 		case '+':
 			out <- &Payload{
 				Reply: protocol.NewSimpleReply(string(line[1:])),
+			}
+			// -  错误
+		case '-':
+			out <- &Payload{
+				Reply: protocol.NewSimpleErrReply(string(line[1:])),
+			}
+
+			// $ 二进制安全，字符串
+		case '$':
+			err = parseBulkString(line, reader, out)
+			if err != nil {
+				out <- &Payload{Err: err}
+				close(out)
+				return
 			}
 		default:
 			args := bytes.Split(line, []byte{' '})
@@ -77,6 +92,31 @@ func parse(r io.Reader, out chan<- *Payload) {
 			}
 		}
 	}
+}
+
+// 格式： $5\r\nvalue\r\n
+func parseBulkString(header []byte, reader *bufio.Reader, out chan<- *Payload) error {
+
+	byteNum, err := strconv.ParseInt(string(header[1:]), 10, 64)
+	if err != nil || byteNum < -1 {
+		protocolError(out, "illegal bulk string header: "+string(header))
+		return nil
+	} else if byteNum == -1 { // 空字符串
+		out <- &Payload{
+			Reply: protocol.NewNullBulkReply(),
+		}
+		return nil
+	}
+
+	body := make([]byte, byteNum+2)
+	_, err = io.ReadFull(reader, body)
+	if err != nil {
+		return err
+	}
+	out <- &Payload{
+		Reply: protocol.NewBulkReply(body[:len(body)-2]),
+	}
+	return nil
 }
 
 /*

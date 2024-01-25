@@ -1,4 +1,5 @@
-# Golang实现自己的redis
+# Golang实现自己的Redis
+
 
 用 11篇文章实现一个遵循标准的Redis服务，姑且叫**EasyRedis**吧，希望通过文章将Redis掰开撕碎了让大家有更直观的理解，而不是仅仅停留在八股文的层面，而是非常爽的感觉，欢迎持续关注学习。
 
@@ -14,6 +15,37 @@
 - [x] [easyredis之事务（原子性/回滚）](https://github.com/gofish2020/easyredis/blob/main/doc/9.%E4%BA%8B%E5%8A%A1/%E4%BA%8B%E5%8A%A1.md)
 
 ## 分布式
-- [x] [easyredis之连接池]()
-- [ ] easyredis之分布式集群存储
+- [x] [easyredis之连接池](https://github.com/gofish2020/easyredis/blob/main/doc/10.%E5%AF%B9%E8%B1%A1%E6%B1%A0/pool.md)
+- [x] [easyredis之分布式集群存储]()
 - [ ] 分布式事务 TCC
+
+
+
+
+## 使用说明
+
+### 单机版
+- 使用`./test.sh`命令启动单机版服务端
+- 使用`./redis-cli.sh`命令启动官方端redis客户端，连接服务（需要你本机自己安装redis-cli并加入到环境变量中）
+
+效果图如下：
+启动服务端
+![](image.png)
+
+客户端连接：
+
+![](image-1.png)
+
+
+### 分布式
+
+- 使用`./redis-cluster0.sh` `./redis-cluster1.sh` `./redis-cluster2.sh`命令启动3个服务端
+- 使用`./redis-cli.sh`命令启动官方端redis客户端，连接服务（需要你本机自己安装redis-cli并加入到环境变量中）
+
+效果图如下
+启动服务端
+![](image-2.png)
+
+客户端连接：
+
+![](image-3.png)

@@ -7,10 +7,13 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/gofish2020/easyredis/abstract"
+	"github.com/gofish2020/easyredis/cluster"
 	"github.com/gofish2020/easyredis/engine"
 	"github.com/gofish2020/easyredis/redis/connection"
 	"github.com/gofish2020/easyredis/redis/parser"
 	"github.com/gofish2020/easyredis/redis/protocol"
+	"github.com/gofish2020/easyredis/tool/conf"
 	"github.com/gofish2020/easyredis/tool/logger"
 )
 
@@ -22,12 +25,25 @@ type Handler interface {
 type RedisHandler struct {
 	activeConn sync.Map
 
-	engine *engine.Engine
+	//engine *engine.Engine
+
+	engine abstract.Engine
 }
 
 func NewRedisHandler() *RedisHandler {
+
+	var abEngine abstract.Engine
+	if len(conf.GlobalConfig.Peers) > 0 {
+		// 分布式
+		logger.Debug("启动集群版")
+		abEngine = cluster.NewCluster()
+	} else {
+		// 单机版
+		logger.Debug("启动单机版")
+		abEngine = engine.NewEngine()
+	}
 	return &RedisHandler{
-		engine: engine.NewEngine(),
+		engine: abEngine,
 	}
 }
 
@@ -74,7 +90,7 @@ func (h *RedisHandler) Handle(ctx context.Context, conn net.Conn) {
 		}
 
 		logger.Debugf("%q", string(reply.ToBytes()))
-
+		// 解析出redis命令，丢给存储引擎处理
 		result := h.engine.Exec(keepConn, reply.RedisCommand)
 		if result != nil {
 			keepConn.Write(result.ToBytes())

@@ -1,3 +1,18 @@
+用11篇文章实现一个可用的Redis服务，姑且叫**EasyRedis**吧，希望通过文章将Redis掰开撕碎了呈现给大家，而不是仅仅停留在八股文的层面，并且有非常爽的感觉，欢迎持续关注学习。
+
+项目代码地址: https://github.com/gofish2020/easyredis 欢迎Fork & Star
+
+- [x] easyredis之TCP服务 
+- [x] easyredis之网络请求序列化协议（RESP）
+- [x] easyredis之内存数据库
+- [x] easyredis之过期时间 (时间轮实现)
+- [x] easyredis之持久化 （AOF实现）
+- [x] easyredis之发布订阅功能
+- [x] easyredis之有序集合（跳表实现）
+- [x] easyredis之 pipeline 客户端实现
+- [x] easyredis之事务（原子性/回滚）
+- [x] easyredis之连接池
+- [ ] easyredis之分布式集群存储
 
 
 

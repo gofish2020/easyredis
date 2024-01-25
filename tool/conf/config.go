@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gofish2020/easyredis/tool/logger"
 	"github.com/gofish2020/easyredis/utils"
 )
 
@@ -37,7 +36,9 @@ type RedisConfig struct {
 	// 服务器密码
 	RequirePass string `conf:"requirepass,omitempty"`
 
+	// 集群
 	Peers []string `conf:"peers"`
+	Self  string   `conf:"self"`
 }
 
 // 全局配置
@@ -75,6 +76,8 @@ func LoadConfig(configFile string) error {
 	if GlobalConfig.Databases == 0 {
 		GlobalConfig.Databases = defaultDatabasesNum
 	}
+
+	utils.MakeDir(GlobalConfig.Dir)
 	return nil
 }
 
@@ -106,7 +109,7 @@ func parse(r io.Reader) *RedisConfig {
 	}
 
 	if err := scanner.Err(); err != nil {
-		logger.Error(err.Error())
+		panic(err.Error())
 	}
 
 	//2.将扫描结果保存到newRedisConfig 对象中

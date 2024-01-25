@@ -17,10 +17,12 @@ func main() {
 	//1. 打印logo
 	println(utils.Logo())
 
-	//2. 日志库初始化
-	initLogger()
-	//3. 初始化配置
+	//2. 初始化配置
 	initConfig()
+
+	//3. 日志库初始化
+	initLogger()
+
 	logger.Info("start easyredis server")
 
 	//4. 服务对象
@@ -41,7 +43,7 @@ func main() {
 
 func initLogger() {
 	logger.Setup(&logger.Settings{
-		Path:       "logs",
+		Path:       conf.GlobalConfig.Dir + "/logs",
 		Name:       "easyredis",
 		Ext:        "log",
 		DateFormat: utils.DateFormat,
@@ -71,5 +73,5 @@ func initConfig() {
 			RunID:          utils.RandString(40),
 		}
 	}
-	logger.Debugf("%#v", conf.GlobalConfig)
+	//logger.Debugf("%#v", conf.GlobalConfig)
 }

@@ -2,6 +2,21 @@ package protocol
 
 import "github.com/gofish2020/easyredis/utils"
 
+// 自定义错误 - xxxxx
+type SimpleErrReply struct {
+	Status string
+}
+
+func NewSimpleErrReply(status string) *SimpleErrReply {
+	return &SimpleErrReply{
+		Status: status,
+	}
+}
+
+func (s *SimpleErrReply) ToBytes() []byte {
+	return []byte("-" + s.Status)
+}
+
 // 一般错误  -ERR xxxxx
 type GenericErrReply struct {
 	Status string
