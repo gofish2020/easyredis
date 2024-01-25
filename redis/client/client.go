@@ -82,7 +82,7 @@ func (rc *RedisClent) Start() error {
 	// 获取服务端结果
 	go rc.execReceive()
 	// 定时发送心跳
-	//go rc.execHeardBeat()
+	go rc.execHeardBeat()
 	rc.connStatus.Store(connRunning) // 启动状态
 	return nil
 }

@@ -20,7 +20,7 @@ Redis集群
 */
 
 const (
-	replicas = 4 // 副本数量
+	replicas = 100 // 副本数量
 )
 
 type Cluster struct {

@@ -17,6 +17,8 @@
 ## 分布式
 - [x] [easyredis之连接池](https://github.com/gofish2020/easyredis/blob/main/doc/10.%E5%AF%B9%E8%B1%A1%E6%B1%A0/pool.md)
 - [x] [easyredis之分布式集群存储]()
+
+## 补充篇
 - [ ] 分布式事务 TCC
 
 

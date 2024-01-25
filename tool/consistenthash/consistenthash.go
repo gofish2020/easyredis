@@ -10,10 +10,10 @@ import (
 type HashFunc func(data []byte) uint32
 
 type Map struct {
-	hashFunc  HashFunc
-	replicas  int
-	hashValue []int // sorted
-	hashMap   map[int]string
+	hashFunc  HashFunc       // 计算hash函数
+	replicas  int            // 每个节点的虚拟节点数量
+	hashValue []int          // hash值
+	hashMap   map[int]string // hash值映射的真实节点
 }
 
 /*
@@ -36,6 +36,7 @@ func (m *Map) IsEmpty() bool {
 	return len(m.hashValue) == 0
 }
 
+// 添加 节点
 func (m *Map) Add(ipAddrs ...string) {
 	for _, ipAddr := range ipAddrs {
 		if ipAddr == "" {
