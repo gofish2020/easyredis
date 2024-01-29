@@ -34,6 +34,19 @@ func noKey(args [][]byte) ([]string, []string) {
 	return nil, nil
 }
 
+func writeMultiKey(args [][]byte) ([]string, []string) {
+
+	size := len(args) / 2
+
+	writeKeys := make([]string, size)
+
+	for i := 0; i < size; i++ {
+		writeKeys = append(writeKeys, string(args[2*i]))
+	}
+
+	return nil, writeKeys
+}
+
 // ********* 回滚 ***********
 
 // 通用的回滚（其实就是将整个内存数据都记录下来）
@@ -91,4 +104,9 @@ func rollbackZSetMembers(db *DB, key string, members ...string) []CmdLine {
 		}
 	}
 	return undoCmdLines
+}
+
+func undoMSet(db *DB, args [][]byte) []CmdLine {
+	_, writeKeys := writeMultiKey(args)
+	return rollbackGivenKeys(db, writeKeys...)
 }

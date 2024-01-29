@@ -39,7 +39,7 @@ func (r *request) Bytes() []byte {
 	return protocol.NewMultiBulkReply(r.command).ToBytes()
 }
 
-type RedisClent struct {
+type RedisClient struct {
 	// socket连接
 	conn net.Conn
 
@@ -59,13 +59,13 @@ type RedisClent struct {
 }
 
 // 创建redis客户端socket
-func NewRedisClient(addr string) (*RedisClent, error) {
+func NewRedisClient(addr string) (*RedisClient, error) {
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return nil, err
 	}
 
-	rc := RedisClent{}
+	rc := RedisClient{}
 	rc.conn = conn
 	rc.waitSend = make(chan *request, maxChanSize)
 	rc.waitResult = make(chan *request, maxChanSize)
@@ -75,19 +75,19 @@ func NewRedisClient(addr string) (*RedisClent, error) {
 }
 
 // 启动
-func (rc *RedisClent) Start() error {
+func (rc *RedisClient) Start() error {
 	rc.ticker = *time.NewTicker(heartBeatInterval)
 	// 将waitSend缓冲区进行发送
 	go rc.execSend()
 	// 获取服务端结果
 	go rc.execReceive()
 	// 定时发送心跳
-	go rc.execHeardBeat()
+	//go rc.execHeardBeat()
 	rc.connStatus.Store(connRunning) // 启动状态
 	return nil
 }
 
-func (rc *RedisClent) execReceive() {
+func (rc *RedisClient) execReceive() {
 
 	ch := parser.ParseStream(rc.conn)
 
@@ -110,7 +110,7 @@ func (rc *RedisClent) execReceive() {
 	}
 }
 
-func (rc *RedisClent) reconnect() {
+func (rc *RedisClient) reconnect() {
 	logger.Info("redis client reconnect...")
 	rc.conn.Close()
 
@@ -149,7 +149,7 @@ func (rc *RedisClent) reconnect() {
 	go rc.execReceive()
 }
 
-func (rc *RedisClent) handleResult(reply protocol.Reply) {
+func (rc *RedisClient) handleResult(reply protocol.Reply) {
 	// 从rc.waitResult 获取一个等待中的请求，将结果保存进去
 	req := <-rc.waitResult
 	if req == nil {
@@ -160,13 +160,13 @@ func (rc *RedisClent) handleResult(reply protocol.Reply) {
 }
 
 // 将waitSend缓冲区进行发送
-func (rc *RedisClent) execSend() {
+func (rc *RedisClient) execSend() {
 	for req := range rc.waitSend {
 		rc.sendReq(req)
 	}
 }
 
-func (rc *RedisClent) sendReq(req *request) {
+func (rc *RedisClient) sendReq(req *request) {
 	// 无效请求
 	if req == nil || len(req.command) == 0 {
 		return
@@ -193,7 +193,7 @@ func (rc *RedisClent) sendReq(req *request) {
 }
 
 // 定时发送心跳
-func (rc *RedisClent) execHeardBeat() {
+func (rc *RedisClient) execHeardBeat() {
 	for range rc.ticker.C {
 		rc.Send([][]byte{[]byte("PING")})
 	}
@@ -201,7 +201,7 @@ func (rc *RedisClent) execHeardBeat() {
 }
 
 // 将redis命令保存到 waitSend 中
-func (rc *RedisClent) Send(command [][]byte) (protocol.Reply, error) {
+func (rc *RedisClient) Send(command [][]byte) (protocol.Reply, error) {
 
 	// 已关闭
 	if rc.connStatus.Load() == connClosed {
@@ -235,7 +235,7 @@ func (rc *RedisClent) Send(command [][]byte) (protocol.Reply, error) {
 	return req.reply, nil
 }
 
-func (rc *RedisClent) Stop() {
+func (rc *RedisClient) Stop() {
 	// 设置已关闭
 	rc.connStatus.Store(connClosed)
 	rc.ticker.Stop()

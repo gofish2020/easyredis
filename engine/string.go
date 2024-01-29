@@ -147,9 +147,33 @@ func cmdSet(db *DB, args [][]byte) protocol.Reply {
 
 	return protocol.NewNullBulkReply()
 }
+
+func cmdMSet(db *DB, args [][]byte) protocol.Reply {
+	size := len(args) / 2
+	// 提取出key value
+	keys := make([]string, 0, size)
+	values := make([][]byte, 0, size)
+	for i := 0; i < size; i++ {
+		keys = append(keys, string(args[2*i]))
+		values = append(values, args[2*i+1])
+	}
+	// 保存到内存中
+	for i, key := range keys {
+		value := values[i]
+		entity := payload.DataEntity{
+			RedisObject: value,
+		}
+		db.PutEntity(key, &entity)
+	}
+	// 写日志
+	db.writeAof(aof.MSetCmd(args...))
+	return protocol.NewOkReply()
+}
 func init() {
 	// 获取值
 	registerCommand("Get", cmdGet, readFirstKey, 2, nil)
 	// 设置值
 	registerCommand("Set", cmdSet, writeFirstKey, -3, rollbackFirstKey)
+	// 设置多个值
+	registerCommand("MSet", cmdMSet, writeMultiKey, -3, undoMSet)
 }

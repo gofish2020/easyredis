@@ -140,6 +140,43 @@ func (e *Engine) Close() {
 	e.aof.Close()
 }
 
+func (e *Engine) RWLocks(dbIndex int, readKeys, writeKeys []string) {
+	db, err := e.selectDB(dbIndex)
+	if err != nil {
+		logger.Error("RWLocks err:", err.Status)
+		return
+	}
+	db.RWLock(readKeys, writeKeys)
+}
+
+func (e *Engine) RWUnLocks(dbIndex int, readKeys, writeKeys []string) {
+	db, err := e.selectDB(dbIndex)
+	if err != nil {
+		logger.Error("RWLocks err:", err.Status)
+		return
+	}
+	db.RWUnLock(readKeys, writeKeys)
+}
+
+func (e *Engine) GetUndoLogs(dbIndex int, redisCommand [][]byte) []CmdLine {
+	db, err := e.selectDB(dbIndex)
+	if err != nil {
+		logger.Error("RWLocks err:", err.Status)
+		return nil
+	}
+	return db.GetUndoLog(redisCommand)
+}
+
+func (e *Engine) ExecWithLock(dbIndex int, redisCommand [][]byte) protocol.Reply {
+	db, err := e.selectDB(dbIndex)
+	if err != nil {
+		logger.Error("RWLocks err:", err.Status)
+		return err
+	}
+
+	return db.execWithLock(redisCommand)
+}
+
 // 遍历引擎的所有数据
 func (e *Engine) ForEach(dbIndex int, cb func(key string, data *payload.DataEntity, expiration *time.Time) bool) {
 

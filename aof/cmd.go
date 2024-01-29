@@ -19,6 +19,10 @@ func SetCmd(args ...[]byte) [][]byte {
 	return utils.BuildCmdLine("SET", args...)
 }
 
+func MSetCmd(args ...[]byte) [][]byte {
+	return utils.BuildCmdLine("MSet", args...)
+}
+
 func SelectCmd(args ...[]byte) [][]byte {
 	return utils.BuildCmdLine("SELECT", args...)
 }
@@ -65,6 +69,12 @@ func Persist(args ...[]byte) [][]byte {
 // Auth
 func Auth(args ...[]byte) [][]byte {
 	return utils.BuildCmdLine("AUTH", args...)
+}
+
+// Get
+
+func Get(args ...[]byte) [][]byte {
+	return utils.BuildCmdLine("GET", args...)
 }
 
 // 内存对象转换成 redis命令

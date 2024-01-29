@@ -11,6 +11,15 @@ import (
 	"github.com/gofish2020/easyredis/tool/pool"
 )
 
+type Factory interface {
+	GetConn(addr string) (Client, error)
+	ReturnConn(peer string, cli Client) error
+}
+
+type Client interface {
+	Send(command [][]byte) (protocol.Reply, error)
+}
+
 type RedisConnPool struct {
 	connDict *dict.ConcurrentDict // addr -> *pool.Pool
 }
@@ -22,7 +31,7 @@ func NewRedisConnPool() *RedisConnPool {
 	}
 }
 
-func (r *RedisConnPool) GetConn(addr string) (*client.RedisClent, error) {
+func (r *RedisConnPool) GetConn(addr string) (Client, error) {
 
 	var connectionPool *pool.Pool // 对象池
 
@@ -56,7 +65,7 @@ func (r *RedisConnPool) GetConn(addr string) (*client.RedisClent, error) {
 
 		// 释放对象函数
 		freeClient := func(x any) {
-			cli, ok := x.(*client.RedisClent)
+			cli, ok := x.(*client.RedisClient)
 			if ok {
 				cli.Stop() // 释放
 			}
@@ -76,14 +85,14 @@ func (r *RedisConnPool) GetConn(addr string) (*client.RedisClent, error) {
 	if err != nil {
 		return nil, err
 	}
-	conn, ok := raw.(*client.RedisClent)
+	conn, ok := raw.(*client.RedisClient)
 	if !ok {
 		return nil, errors.New("connection pool make wrong type")
 	}
 	return conn, nil
 }
 
-func (r *RedisConnPool) ReturnConn(peer string, cli *client.RedisClent) error {
+func (r *RedisConnPool) ReturnConn(peer string, cli Client) error {
 	raw, ok := r.connDict.Get(peer)
 	if !ok {
 		return errors.New("connection pool not found")

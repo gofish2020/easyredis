@@ -10,7 +10,8 @@ func (cluster *Cluster) Relay(peer string, conn abstract.Connection, redisComman
 
 	// ******本地执行******
 	if cluster.self == peer {
-		return cluster.engine.Exec(conn, redisCommand)
+		//return cluster.engine.Exec(conn, redisCommand)
+		return cluster.Exec(conn, redisCommand)
 	}
 
 	// ******发送到远端执行******
