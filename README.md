@@ -16,10 +16,10 @@
 
 ## 分布式
 - [x] [easyredis之连接池](https://github.com/gofish2020/easyredis/blob/main/doc/10.%E5%AF%B9%E8%B1%A1%E6%B1%A0/pool.md)
-- [x] [easyredis之分布式集群存储]()
+- [x] [easyredis之分布式集群存储](https://github.com/gofish2020/easyredis/blob/main/doc/11.%E5%88%86%E5%B8%83%E5%BC%8F%E9%9B%86%E7%BE%A4/cluster.md)
 
 ## 补充篇
-- [ ] 分布式事务 TCC
+- [x] [分布式事务 TCC](https://github.com/gofish2020/easyredis/blob/main/doc/12.%E5%88%86%E5%B8%83%E5%BC%8F%E4%BA%8B%E5%8A%A1TCC/tcc.md)
 
 
 
