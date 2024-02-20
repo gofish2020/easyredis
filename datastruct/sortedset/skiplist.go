@@ -114,6 +114,9 @@ func (s *skiplist) insert(member string, score float64) *node {
 			beforeNode[i].levels[i].forward = nil
 			beforeNode[i].levels[i].span = s.length
 		}
+
+		// 更新最大层高
+		s.maxLevel = newLevel
 	}
 
 	node = newNode(newLevel, member, score)
